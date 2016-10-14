@@ -150,21 +150,6 @@ module VagrantPlugins
         end
       end
 
-      # vSphere specific actions
-      def self.action_get_state
-        Vagrant::Action::Builder.new.tap do |b|
-          b.use HandleBox
-          b.use ConfigValidate
-          b.use GetState
-        end
-      end
-
-      def self.action_get_ssh_info
-        Vagrant::Action::Builder.new.tap do |b|
-          b.use ConfigValidate
-          b.use GetSshInfo
-        end
-      end
 
       # TODO: Remove the if guard when Vagrant 1.8.0 is the minimum version.
       # rubocop:disable IndentationWidth
@@ -234,8 +219,6 @@ module VagrantPlugins
       action_root = Pathname.new(File.expand_path('../action', __FILE__))
       autoload :Clone, action_root.join('clone')
       autoload :Destroy, action_root.join('destroy')
-      autoload :GetSshInfo, action_root.join('get_ssh_info')
-      autoload :GetState, action_root.join('get_state')
       autoload :IsCreated, action_root.join('is_created')
       autoload :IsRunning, action_root.join('is_running')
       autoload :MessageAlreadyCreated, action_root.join('message_already_created')

@@ -5,8 +5,8 @@ module VagrantPlugins
     	class Driver
     		@@connection = nil
 
-			def initialize(uuid)
-				 @uuid = uuid
+			def initialize(machine)
+				 @machine = machine
 			end
 
 			def finalize
@@ -16,7 +16,7 @@ module VagrantPlugins
 			def connection
 				return @@connection if @@connection
 
-				config = env[:machine].provider_config
+				config = @machine.provider_config
 
 				@@connection  = RbVmomi::VIM.connect host: config.host,
 					user: config.user, password: config.password,
@@ -30,6 +30,50 @@ module VagrantPlugins
 					@@connection = nil
 				end
 			end
+
+			def ssh_info
+				get_ssh_info(connection, @machine)
+			end
+
+			def state
+				get_state(connection, @machine)
+			end
+
+			private
+	        def get_ssh_info(connection, machine)
+	          return nil if machine.id.nil?
+
+	          vm = get_vm_by_uuid connection, machine
+	          return nil if vm.nil?
+	          ip_address = filter_guest_nic(vm, machine)
+	          return nil if ip_address.nil? || ip_address.empty?
+	          {
+	            host: ip_address,
+	            port: 22
+	          }
+	        end   
+
+	        def get_state(connection, machine)
+	          return :not_created  if machine.id.nil?
+
+	          vm = get_vm_by_uuid connection, machine
+
+	          return :not_created if vm.nil?
+
+	          if powered_on?(vm)
+	            :running
+	          else
+	            # If the VM is powered off or suspended, we consider it to be powered off. A power on command will either turn on or resume the VM
+	            :poweroff
+	          end
+	        end
+
+	        def filter_guest_nic(vm, machine)
+	          return vm.guest.ipAddress unless machine.provider_config.real_nic_ip
+	          ip_addresses = vm.guest.net.select { |g| g.deviceConfigId > 0 }.map { |g| g.ipAddress[0] }
+	          fail Errors::VSphereError.new, :'multiple_interface_with_real_nic_ip_set' if ip_addresses.size > 1
+	          ip_addresses.first
+	        end
     	end
 	end
 end
