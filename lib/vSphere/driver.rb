@@ -34,50 +34,126 @@ module VagrantPlugins
 			end
 
 			def ssh_info
-				get_ssh_info(connection, @machine)
+				return nil if @machine.id.nil?
+	
+				vm = get_vm_by_uuid connection, @machine
+				return nil if vm.nil?
+	
+				ip_address = filter_guest_nic(vm, @machine)
+				return nil if ip_address.nil? || ip_address.empty?
+				{
+					host: ip_address,
+					port: 22
+				}
 			end
 
 			def state
-				get_state(connection, @machine)
+				return :not_created if @machine.id.nil?
+
+				vm = get_vm_by_uuid connection, @machine
+
+				return :not_created if vm.nil?
+
+				if powered_on?(vm)
+					:running
+				else
+					# If the VM is powered off or suspended, we consider it to be powered off. A power on command will either turn on or resume the VM
+					:poweroff
+				end				
 			end
+
+			def power_on_vm
+				return nil if @machine.id.nil?
+
+				vm = get_vm_by_uuid connection, @machine
+	          	vm.PowerOnVM_Task.wait_for_completion
+	        end
+
+	        def power_off_vm
+	        	return nil if @machine.id.nil?
+
+	        	vm = get_vm_by_uuid connection, @machine
+	          	vm.PowerOffVM_Task.wait_for_completion
+	        end
+
+	        def get_vm_state
+	        	return nil if @machine.id.nil?
+
+	        	vm = get_vm_by_uuid connection, @machine
+	          	vm.runtime.powerState
+	        end
+
+	        def powered_on?
+	        	return nil if @machine.id.nil?
+
+	        	vm = get_vm_by_uuid connection, @machine
+	          	get_vm_state(vm).eql?(VmState::POWERED_ON)
+	        end
+
+	        def powered_off?
+	        	return nil if @machine.id.nil?
+
+	        	vm = get_vm_by_uuid connection, @machine
+	          	get_vm_state(vm).eql?(VmState::POWERED_OFF)
+	        end
+
+	        def suspended?
+				return nil if @machine.id.nil?
+
+	        	vm = get_vm_by_uuid connection, @machine
+	          	get_vm_state(vm).eql?(VmState::SUSPENDED)
+	        end
+
+	        def destroy
+	        	return nil if @machine.id.nil?
+
+	        	vm = get_vm_by_uuid connection, @machine
+	          	vm.Destroy_Task.wait_for_completion
+	        end
+
+	        def is_created
+				return false if @machine.id.nil?
+
+				vm = get_vm_by_uuid connection, @machine
+
+				return false if vm.nil?
+
+				true
+	        end
+
+	        def is_running
+				state == :running
+	        end	        
 
 			def snapshot_list
-				snapshot_list(connection, @machine)
-			end
+				return nil if @machine.id.nil?
 
-			private
-			def snapshot_list(connection, machine)
-				vm = get_vm_by_uuid connection, machine
+				vm = get_vm_by_uuid connection, @machine
 				enumerate_snapshots(vm).map(&:name)
 			end
 
-	        def get_ssh_info(connection, machine)
-	          return nil if machine.id.nil?
+			def delete_snapshot(snapshot_name)
+				return nil if @machine.id.nil?
 
-	          vm = get_vm_by_uuid connection, machine
-	          return nil if vm.nil?
-	          ip_address = filter_guest_nic(vm, machine)
-	          return nil if ip_address.nil? || ip_address.empty?
-	          {
-	            host: ip_address,
-	            port: 22
-	          }
-	        end   
+				vm = get_vm_by_uuid connection, @machine
+				delete_snapshot(vm, snapshot_name)
+			end
 
-	        def get_state(connection, machine)
-	          return :not_created  if machine.id.nil?
+			def restore_snapshot(snapshot_name)
+				return nil if @machine.id.nil?
 
-	          vm = get_vm_by_uuid connection, machine
+				vm = get_vm_by_uuid connection, @machine
+				restore_snapshot(vm, snapshot_name)
+			end	
 
-	          return :not_created if vm.nil?
+			def create_snapshot(snapshot_name)
+				return nil if @machine.id.nil?
 
-	          if powered_on?(vm)
-	            :running
-	          else
-	            # If the VM is powered off or suspended, we consider it to be powered off. A power on command will either turn on or resume the VM
-	            :poweroff
-	          end
-	        end
+				vm = get_vm_by_uuid connection, @machine
+				create_snapshot(vm, snapshot_name)
+			end	
+
+			private
 
 	        def filter_guest_nic(vm, machine)
 	          return vm.guest.ipAddress unless machine.provider_config.real_nic_ip
