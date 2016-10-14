@@ -2,6 +2,7 @@ require 'vagrant'
 
 module VagrantPlugins
   module VSphere
+    autoload :Driver, 'vSphere/driver'
     class Provider < Vagrant.plugin('2', :provider)
       def initialize(machine)
         @machine = machine
@@ -11,6 +12,11 @@ module VagrantPlugins
         action_method = "action_#{name}"
         return Action.send(action_method) if Action.respond_to?(action_method)
         nil
+      end
+
+      def driver
+        return @driver if @driver
+        @driver = Driver.new(@machine)
       end
 
       def ssh_info

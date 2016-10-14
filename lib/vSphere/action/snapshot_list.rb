@@ -13,7 +13,7 @@ module VagrantPlugins
         end
 
         def call(env)
-          vm = get_vm_by_uuid(env[:vSphere_connection], env[:machine])
+          vm = get_vm_by_uuid(env[:machine].provider.driver.connection, env[:machine])
 
           env[:machine_snapshot_list] = enumerate_snapshots(vm).map(&:name)
 

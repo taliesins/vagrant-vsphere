@@ -15,7 +15,7 @@ module VagrantPlugins
         def call(env)
           machine = env[:machine]
           config = machine.provider_config
-          connection = env[:vSphere_connection]
+          connection = env[:machine].provider.driver.connection
           name = get_name machine, config, env[:root_path]
           dc = get_datacenter connection, machine
           template = dc.find_vm config.template_name

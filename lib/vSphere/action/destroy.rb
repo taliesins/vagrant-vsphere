@@ -23,7 +23,7 @@ module VagrantPlugins
 
         def destroy_vm(env)
           return if env[:machine].state.id == :not_created
-          vm = get_vm_by_uuid env[:vSphere_connection], env[:machine]
+          vm = get_vm_by_uuid env[:machine].provider.driver.connection, env[:machine]
           return if vm.nil?
 
           begin

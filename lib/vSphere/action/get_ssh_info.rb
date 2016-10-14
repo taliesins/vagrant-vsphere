@@ -12,7 +12,7 @@ module VagrantPlugins
         end
 
         def call(env)
-          env[:machine_ssh_info] = get_ssh_info(env[:vSphere_connection], env[:machine])
+          env[:machine_ssh_info] = get_ssh_info(env[:machine].provider.driver.connection, env[:machine])
           @app.call env
         end
 

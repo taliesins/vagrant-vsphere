@@ -15,7 +15,7 @@ module VagrantPlugins
         end
 
         def call(env)
-          vm = get_vm_by_uuid env[:vSphere_connection], env[:machine]
+          vm = get_vm_by_uuid env[:machine].provider.driver.connection, env[:machine]
 
           # If the vm is suspended, we need to turn it on so that we can turn it off.
           # This may seem counterintuitive, but the vsphere API documentation states

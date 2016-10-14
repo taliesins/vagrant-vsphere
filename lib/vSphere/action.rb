@@ -10,7 +10,6 @@ module VagrantPlugins
       def self.action_destroy
         Vagrant::Action::Builder.new.tap do |b|
           b.use ConfigValidate
-          b.use ConnectVSphere
           b.use(ProvisionerCleanup, :before)
 
           b.use Call, IsRunning do |env, b2|
@@ -97,7 +96,6 @@ module VagrantPlugins
         Vagrant::Action::Builder.new.tap do |b|
           b.use HandleBox
           b.use ConfigValidate
-          b.use ConnectVSphere
           b.use Call, IsCreated do |env, b2|
             if env[:result]
               b2.use MessageAlreadyCreated
@@ -109,7 +107,6 @@ module VagrantPlugins
           b.use Call, IsRunning do |env, b2|
             b2.use PowerOn unless env[:result]
           end
-          b.use CloseVSphere
           b.use WaitForCommunicator
           b.use Provision
           b.use SyncedFolders
@@ -120,7 +117,6 @@ module VagrantPlugins
       def self.action_halt
         Vagrant::Action::Builder.new.tap do |b|
           b.use ConfigValidate
-          b.use ConnectVSphere
           b.use Call, IsCreated do |env, b2|
             unless env[:result]
               b2.use MessageNotCreated
@@ -138,13 +134,11 @@ module VagrantPlugins
               end
             end
           end
-          b.use CloseVSphere
         end
       end
 
       def self.action_reload
         Vagrant::Action::Builder.new.tap do |b|
-          b.use ConnectVSphere
           b.use Call, IsCreated do |env, b2|
             unless env[:result]
               b2.use MessageNotCreated
@@ -161,18 +155,14 @@ module VagrantPlugins
         Vagrant::Action::Builder.new.tap do |b|
           b.use HandleBox
           b.use ConfigValidate
-          b.use ConnectVSphere
           b.use GetState
-          b.use CloseVSphere
         end
       end
 
       def self.action_get_ssh_info
         Vagrant::Action::Builder.new.tap do |b|
           b.use ConfigValidate
-          b.use ConnectVSphere
           b.use GetSshInfo
-          b.use CloseVSphere
         end
       end
 
@@ -182,7 +172,6 @@ module VagrantPlugins
       def self.action_snapshot_delete
         Vagrant::Action::Builder.new.tap do |b|
           b.use ConfigValidate
-          b.use ConnectVSphere
           b.use Call, IsCreated do |env, b2|
             if env[:result]
               b2.use SnapshotDelete
@@ -190,14 +179,12 @@ module VagrantPlugins
               b2.use MessageNotCreated
             end
           end
-          b.use CloseVSphere
         end
       end
 
       def self.action_snapshot_list
         Vagrant::Action::Builder.new.tap do |b|
           b.use ConfigValidate
-          b.use ConnectVSphere
           b.use Call, IsCreated do |env, b2|
             if env[:result]
               b2.use SnapshotList
@@ -205,14 +192,12 @@ module VagrantPlugins
               b2.use MessageNotCreated
             end
           end
-          b.use CloseVSphere
         end
       end
 
       def self.action_snapshot_restore
         Vagrant::Action::Builder.new.tap do |b|
           b.use ConfigValidate
-          b.use ConnectVSphere
           b.use Call, IsCreated do |env, b2|
             unless env[:result]
               b2.use MessageNotCreated
@@ -227,14 +212,12 @@ module VagrantPlugins
 
             b2.use action_up
           end
-          b.use CloseVSphere
         end
       end
 
       def self.action_snapshot_save
         Vagrant::Action::Builder.new.tap do |b|
           b.use ConfigValidate
-          b.use ConnectVSphere
           b.use Call, IsCreated do |env, b2|
             if env[:result]
               b2.use SnapshotSave
@@ -242,7 +225,6 @@ module VagrantPlugins
               b2.use MessageNotCreated
             end
           end
-          b.use CloseVSphere
         end
       end
       end # Vagrant > 1.8.0 guard
@@ -251,8 +233,6 @@ module VagrantPlugins
       # autoload
       action_root = Pathname.new(File.expand_path('../action', __FILE__))
       autoload :Clone, action_root.join('clone')
-      autoload :CloseVSphere, action_root.join('close_vsphere')
-      autoload :ConnectVSphere, action_root.join('connect_vsphere')
       autoload :Destroy, action_root.join('destroy')
       autoload :GetSshInfo, action_root.join('get_ssh_info')
       autoload :GetState, action_root.join('get_state')

@@ -3,7 +3,7 @@ require 'vSphere/util/vim_helpers'
 
 describe VagrantPlugins::VSphere::Action::GetState do
   before :each do
-    @env[:vSphere_connection] = @vim
+    @env[:machine].provider.driver.connection = @vim
   end
 
   it 'should set state id to not created if machine ID is not set' do

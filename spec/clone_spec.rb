@@ -4,7 +4,7 @@ CUSTOM_VM_FOLDER = 'custom_vm_folder'
 
 describe VagrantPlugins::VSphere::Action::Clone do
   before :each do
-    @env[:vSphere_connection] = @vim
+    @env[:machine].provider.driver.connection = @vim
   end
 
   it "should create a CloneVM task with template's parent" do

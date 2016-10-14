@@ -14,7 +14,7 @@ module VagrantPlugins
         end
 
         def call(env)
-          env[:machine_state_id] = get_state(env[:vSphere_connection], env[:machine])
+          env[:machine_state_id] = get_state(env[:machine].provider.driver.connection, env[:machine])
 
           @app.call env
         end
