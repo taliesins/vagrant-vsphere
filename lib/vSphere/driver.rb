@@ -1,4 +1,6 @@
 require 'rbvmomi'
+require 'vSphere/util/vim_helpers'
+require 'vSphere/util/vm_helpers'
 
 module VagrantPlugins
   	module VSphere
@@ -39,7 +41,16 @@ module VagrantPlugins
 				get_state(connection, @machine)
 			end
 
+			def snapshot_list
+				snapshot_list(connection, @machine)
+			end
+
 			private
+			def snapshot_list(connection, machine)
+				vm = get_vm_by_uuid connection, machine
+				enumerate_snapshots(vm).map(&:name)
+			end
+
 	        def get_ssh_info(connection, machine)
 	          return nil if machine.id.nil?
 
