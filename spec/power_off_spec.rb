@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe VagrantPlugins::VSphere::Action::PowerOff do
   before :each do
-    @env[:vSphere_connection] = @vim
+    @env[:machine].provider.driver.connection = @vim
   end
 
   it 'should power off the VM if it is powered on' do

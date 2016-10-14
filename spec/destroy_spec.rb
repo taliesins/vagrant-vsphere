@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe VagrantPlugins::VSphere::Action::Destroy do
   before :each do
-    @env[:vSphere_connection] = @vim
+    @env[:machine].provider.driver.connection = @vim
   end
 
   it 'should set the machine id to nil' do

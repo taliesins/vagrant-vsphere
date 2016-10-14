@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe VagrantPlugins::VSphere::Action::GetSshInfo do
   before :each do
-    @env[:vSphere_connection] = @vim
+    @env[:machine].provider.driver.connection = @vim
   end
 
   it 'should set the ssh info to nil if machine ID is not set' do

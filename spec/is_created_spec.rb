@@ -3,7 +3,7 @@ require 'vSphere/action/is_created'
 
 describe VagrantPlugins::VSphere::Action::IsCreated do
   before :each do
-    @env[:vSphere_connection] = @vim
+    @env[:machine].provider.driver.connection = @vim
   end
 
   it 'should set result to false if the VM does not exist' do
