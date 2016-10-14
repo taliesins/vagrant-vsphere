@@ -106,6 +106,7 @@ module VagrantPlugins
 
 	        def destroy
 	        	return nil if @machine.id.nil?
+	        	return nil if !is_created
 
 	        	vm = get_vm_by_uuid connection, @machine
 	          	vm.Destroy_Task.wait_for_completion
