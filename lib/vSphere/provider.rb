@@ -24,7 +24,7 @@ module VagrantPlugins
       def machine_id_changed
         id = @machine.id
         @logger.debug("Instantiating the driver for machine ID: #{@machine.id.inspect}")
-        @driver = VagrantPlugins::VSphere::Driver.new(@machine)
+        @driver = Driver.new(@machine)
       end
 
       def driver
