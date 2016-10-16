@@ -86,17 +86,17 @@ module VagrantPlugins
 
 				def powered_on?
 					return nil if @machine.id.nil?
-					get_vm_state.eql?(VmState::POWERED_ON)
+					get_vm_state.eql?(Util::VmState::POWERED_ON)
 				end
 
 				def powered_off?
 					return nil if @machine.id.nil?
-					get_vm_state.eql?(VmState::POWERED_OFF)
+					get_vm_state.eql?(Util::VmState::POWERED_OFF)
 				end
 
 				def suspended?
 					return nil if @machine.id.nil?
-					get_vm_state.eql?(VmState::SUSPENDED)
+					get_vm_state.eql?(Util::VmState::SUSPENDED)
 				end
 
 				def destroy
