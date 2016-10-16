@@ -1,14 +1,11 @@
 require 'vagrant'
-require 'vSphere/util/vim_helpers'
-require 'vSphere/util/vm_helpers'
 
 module VagrantPlugins
   module VSphere
-    autoload :Driver, 'vSphere/driver'
-
     class Provider < Vagrant.plugin('2', :provider)
       def initialize(machine)
         @machine = machine
+        @driver = nil
       end
 
       def action(name)
@@ -18,15 +15,18 @@ module VagrantPlugins
       end
 
       def driver
+        puts "driver requested"
         return @driver if @driver
         @driver = Driver.new(@machine)
       end
 
       def ssh_info
+        puts "ssh_info requested"
         driver.ssh_info
       end
 
       def state
+        puts "state requested"
         driver.state
       end
 
