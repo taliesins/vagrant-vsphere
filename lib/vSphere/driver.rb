@@ -5,6 +5,9 @@ require 'vSphere/util/vm_helpers'
 module VagrantPlugins
   	module VSphere
     	class Driver
+    		include Util::VimHelpers
+        	include Util::VmHelpers
+
 			def initialize(machine)
 				 @machine = machine
 				 @connection = nil
