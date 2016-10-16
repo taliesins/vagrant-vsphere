@@ -1,9 +1,12 @@
 require 'log4r'
 require 'vagrant'
+require_relative 'driver'
 
 module VagrantPlugins
   module VSphere
     class Provider < Vagrant.plugin('2', :provider)
+      attr_reader :driver
+
       def initialize(machine)
         @logger = Log4r::Logger.new('vagrant::provider::vsphere')
         @machine = machine
@@ -24,13 +27,14 @@ module VagrantPlugins
       def machine_id_changed
         id = @machine.id
         @logger.debug("Instantiating the driver for machine ID: #{@machine.id.inspect}")
-        @driver = Driver.new(@machine)
+        @driver = VagrantPlugins::VSphere::Driver.new(@machine)
+        nil
       end
 
       def driver
         puts "driver requested"
         return @driver if @driver
-        @driver = Driver.new(@machine)
+        @driver = VagrantPlugins::VSphere::Driver.new(@machine)
       end
 
       def ssh_info
