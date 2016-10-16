@@ -8,14 +8,6 @@ module VagrantPlugins
 			def initialize(machine)
 				 @machine = machine
 				 @connection = nil
-				 ObjectSpace.define_finalizer(self, self.class.finalize(@connection) )
-			end
-
-			def self.finalize(conn)
-				if conn 
-					conn.close 
-					conn = nil
-				end
 			end
 
 			def connection
@@ -23,10 +15,12 @@ module VagrantPlugins
 
 				config = @machine.provider_config
 
-				@connection  = RbVmomi::VIM.connect host: config.host,
+				@connection = RbVmomi::VIM.connect host: config.host,
 					user: config.user, password: config.password,
 					insecure: config.insecure, proxyHost: config.proxy_host,
 					proxyPort: config.proxy_port
+
+				return @connection
 			end
 
 			def close_connection
