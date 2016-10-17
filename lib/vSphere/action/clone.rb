@@ -15,92 +15,93 @@ module VagrantPlugins
         def call(env)
           machine = env[:machine]
           config = machine.provider_config
-          connection = machine.provider.driver.connection
-          name = get_name machine, config, env[:root_path]
-          dc = get_datacenter connection, machine
-          template = dc.find_vm config.template_name
-          fail Errors::VSphereError, :'missing_template' if template.nil?
-          vm_base_folder = get_vm_base_folder dc, template, config
-          fail Errors::VSphereError, :'invalid_base_path' if vm_base_folder.nil?
 
-          begin
-            # Storage DRS does not support vSphere linked clones. http://www.vmware.com/files/pdf/techpaper/vsphere-storage-drs-interoperability.pdf
-            ds = get_datastore dc, machine
-            fail Errors::VSphereError, :'invalid_configuration_linked_clone_with_sdrs' if config.linked_clone && ds.is_a?(RbVmomi::VIM::StoragePod)
+          machine.provider.driver.connection do |conn|
+            name = get_name machine, config, env[:root_path]
+            dc = get_datacenter conn, machine
+            template = dc.find_vm config.template_name
+            fail Errors::VSphereError, :'missing_template' if template.nil?
+            vm_base_folder = get_vm_base_folder dc, template, config
+            fail Errors::VSphereError, :'invalid_base_path' if vm_base_folder.nil?
 
-            location = get_location ds, dc, machine, template
-            spec = RbVmomi::VIM.VirtualMachineCloneSpec location: location, powerOn: true, template: false
-            spec[:config] = RbVmomi::VIM.VirtualMachineConfigSpec
-            customization_info = get_customization_spec_info_by_name connection, machine
+            begin
+              # Storage DRS does not support vSphere linked clones. http://www.vmware.com/files/pdf/techpaper/vsphere-storage-drs-interoperability.pdf
+              ds = get_datastore dc, machine
+              fail Errors::VSphereError, :'invalid_configuration_linked_clone_with_sdrs' if config.linked_clone && ds.is_a?(RbVmomi::VIM::StoragePod)
 
-            spec[:customization] = get_customization_spec(machine, customization_info) unless customization_info.nil?
+              location = get_location ds, dc, machine, template
+              spec = RbVmomi::VIM.VirtualMachineCloneSpec location: location, powerOn: true, template: false
+              spec[:config] = RbVmomi::VIM.VirtualMachineConfigSpec
+              customization_info = get_customization_spec_info_by_name conn, machine
 
-            env[:ui].info "Setting custom address: #{config.addressType}" unless config.addressType.nil?
-            add_custom_address_type(template, spec, config.addressType) unless config.addressType.nil?
+              spec[:customization] = get_customization_spec(machine, customization_info) unless customization_info.nil?
 
-            env[:ui].info "Setting custom mac: #{config.mac}" unless config.mac.nil?
-            add_custom_mac(template, spec, config.mac) unless config.mac.nil?
+              env[:ui].info "Setting custom address: #{config.addressType}" unless config.addressType.nil?
+              add_custom_address_type(template, spec, config.addressType) unless config.addressType.nil?
 
-            env[:ui].info "Setting custom vlan: #{config.vlan}" unless config.vlan.nil?
-            add_custom_vlan(template, dc, spec, config.vlan) unless config.vlan.nil?
+              env[:ui].info "Setting custom mac: #{config.mac}" unless config.mac.nil?
+              add_custom_mac(template, spec, config.mac) unless config.mac.nil?
 
-            env[:ui].info "Setting custom memory: #{config.memory_mb}" unless config.memory_mb.nil?
-            add_custom_memory(spec, config.memory_mb) unless config.memory_mb.nil?
+              env[:ui].info "Setting custom vlan: #{config.vlan}" unless config.vlan.nil?
+              add_custom_vlan(template, dc, spec, config.vlan) unless config.vlan.nil?
 
-            env[:ui].info "Setting custom cpu count: #{config.cpu_count}" unless config.cpu_count.nil?
-            add_custom_cpu(spec, config.cpu_count) unless config.cpu_count.nil?
+              env[:ui].info "Setting custom memory: #{config.memory_mb}" unless config.memory_mb.nil?
+              add_custom_memory(spec, config.memory_mb) unless config.memory_mb.nil?
 
-            env[:ui].info "Setting custom cpu reservation: #{config.cpu_reservation}" unless config.cpu_reservation.nil?
-            add_custom_cpu_reservation(spec, config.cpu_reservation) unless config.cpu_reservation.nil?
+              env[:ui].info "Setting custom cpu count: #{config.cpu_count}" unless config.cpu_count.nil?
+              add_custom_cpu(spec, config.cpu_count) unless config.cpu_count.nil?
 
-            env[:ui].info "Setting custom memmory reservation: #{config.mem_reservation}" unless config.mem_reservation.nil?
-            add_custom_mem_reservation(spec, config.mem_reservation) unless config.mem_reservation.nil?
-            add_custom_extra_config(spec, config.extra_config) unless config.extra_config.empty?
-            add_custom_notes(spec, config.notes) unless config.notes.nil?
+              env[:ui].info "Setting custom cpu reservation: #{config.cpu_reservation}" unless config.cpu_reservation.nil?
+              add_custom_cpu_reservation(spec, config.cpu_reservation) unless config.cpu_reservation.nil?
 
-            if !config.clone_from_vm && ds.is_a?(RbVmomi::VIM::StoragePod)
+              env[:ui].info "Setting custom memmory reservation: #{config.mem_reservation}" unless config.mem_reservation.nil?
+              add_custom_mem_reservation(spec, config.mem_reservation) unless config.mem_reservation.nil?
+              add_custom_extra_config(spec, config.extra_config) unless config.extra_config.empty?
+              add_custom_notes(spec, config.notes) unless config.notes.nil?
 
-              storage_mgr = connection.serviceContent.storageResourceManager
-              pod_spec = RbVmomi::VIM.StorageDrsPodSelectionSpec(storagePod: ds)
-              # TODO: May want to add option on type?
-              storage_spec = RbVmomi::VIM.StoragePlacementSpec(type: 'clone', cloneName: name, folder: vm_base_folder, podSelectionSpec: pod_spec, vm: template, cloneSpec: spec)
+              if !config.clone_from_vm && ds.is_a?(RbVmomi::VIM::StoragePod)
 
-              env[:ui].info I18n.t('vsphere.requesting_sdrs_recommendation')
-              env[:ui].info " -- DatastoreCluster: #{ds.name}"
-              env[:ui].info " -- Template VM: #{template.pretty_path}"
-              env[:ui].info " -- Target VM: #{vm_base_folder.pretty_path}/#{name}"
+                storage_mgr = conn.serviceContent.storageResourceManager
+                pod_spec = RbVmomi::VIM.StorageDrsPodSelectionSpec(storagePod: ds)
+                # TODO: May want to add option on type?
+                storage_spec = RbVmomi::VIM.StoragePlacementSpec(type: 'clone', cloneName: name, folder: vm_base_folder, podSelectionSpec: pod_spec, vm: template, cloneSpec: spec)
 
-              result = storage_mgr.RecommendDatastores(storageSpec: storage_spec)
+                env[:ui].info I18n.t('vsphere.requesting_sdrs_recommendation')
+                env[:ui].info " -- DatastoreCluster: #{ds.name}"
+                env[:ui].info " -- Template VM: #{template.pretty_path}"
+                env[:ui].info " -- Target VM: #{vm_base_folder.pretty_path}/#{name}"
 
-              recommendation = result.recommendations[0]
-              key = recommendation.key ||= ''
-              if key == ''
-                fail Errors::VSphereError, :missing_datastore_recommendation
+                result = storage_mgr.RecommendDatastores(storageSpec: storage_spec)
+
+                recommendation = result.recommendations[0]
+                key = recommendation.key ||= ''
+                if key == ''
+                  fail Errors::VSphereError, :missing_datastore_recommendation
+                end
+
+                env[:ui].info I18n.t('vsphere.creating_cloned_vm_sdrs')
+                env[:ui].info " -- Storage DRS recommendation: #{recommendation.target.name} #{recommendation.reasonText}"
+
+                apply_sr_result = storage_mgr.ApplyStorageDrsRecommendation_Task(key: [key]).wait_for_completion
+                new_vm = apply_sr_result.vm
+              else
+                env[:ui].info I18n.t('vsphere.creating_cloned_vm')
+                env[:ui].info " -- #{config.clone_from_vm ? 'Source' : 'Template'} VM: #{template.pretty_path}"
+                env[:ui].info " -- Target VM: #{vm_base_folder.pretty_path}/#{name}"
+
+                new_vm = template.CloneVM_Task(folder: vm_base_folder, name: name, spec: spec).wait_for_completion
+
+                config.custom_attributes.each do |k, v|
+                  env[:ui].info "Setting custom attribute: #{k}=#{v}"
+                  new_vm.setCustomValue(key: k, value: v)
+                end
               end
-
-              env[:ui].info I18n.t('vsphere.creating_cloned_vm_sdrs')
-              env[:ui].info " -- Storage DRS recommendation: #{recommendation.target.name} #{recommendation.reasonText}"
-
-              apply_sr_result = storage_mgr.ApplyStorageDrsRecommendation_Task(key: [key]).wait_for_completion
-              new_vm = apply_sr_result.vm
-            else
-              env[:ui].info I18n.t('vsphere.creating_cloned_vm')
-              env[:ui].info " -- #{config.clone_from_vm ? 'Source' : 'Template'} VM: #{template.pretty_path}"
-              env[:ui].info " -- Target VM: #{vm_base_folder.pretty_path}/#{name}"
-
-              new_vm = template.CloneVM_Task(folder: vm_base_folder, name: name, spec: spec).wait_for_completion
-
-              config.custom_attributes.each do |k, v|
-                env[:ui].info "Setting custom attribute: #{k}=#{v}"
-                new_vm.setCustomValue(key: k, value: v)
-              end
+            rescue Errors::VSphereError
+              raise
+            rescue StandardError => e
+              raise Errors::VSphereError.new, e.message
             end
-          rescue Errors::VSphereError
-            raise
-          rescue StandardError => e
-            raise Errors::VSphereError.new, e.message
           end
-
           # TODO: handle interrupted status in the environment, should the vm be destroyed?
 
           machine.id = new_vm.config.uuid
