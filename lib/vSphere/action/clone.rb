@@ -101,12 +101,12 @@ module VagrantPlugins
             rescue StandardError => e
               raise Errors::VSphereError.new, e.message
             end
+
+            # TODO: handle interrupted status in the environment, should the vm be destroyed?
+            machine.id = new_vm.config.uuid
+
+            env[:ui].info I18n.t('vsphere.vm_clone_success')
           end
-          # TODO: handle interrupted status in the environment, should the vm be destroyed?
-
-          machine.id = new_vm.config.uuid
-
-          env[:ui].info I18n.t('vsphere.vm_clone_success')
 
           @app.call env
         end
