@@ -25,6 +25,12 @@ module VagrantPlugins
 						user: config.user, password: config.password,
 						insecure: config.insecure, proxyHost: config.proxy_host,
 						proxyPort: config.proxy_port
+
+					ObjectSpace.define_finalizer( self, self.class.lazy_close_connection(@connection) )
+				end
+
+				def self.lazy_close_connection(connection)
+					proc {[connection].close if [connection]}
 				end
 
 				def close_connection
