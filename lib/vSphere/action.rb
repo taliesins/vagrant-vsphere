@@ -107,7 +107,7 @@ module VagrantPlugins
           b.use Call, IsRunning do |env, b2|
             b2.use PowerOn unless env[:result]
           end
-          b.use WaitForIPAddress
+  
           b.use WaitForCommunicator, [:running]
           b.use Provision
           b.use SyncedFolders
