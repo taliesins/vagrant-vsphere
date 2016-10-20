@@ -1,7 +1,5 @@
 require 'rbvmomi'
 require 'i18n'
-require 'vSphere/util/vim_helpers'
-require 'vSphere/util/vm_helpers'
 
 module VagrantPlugins
   module VSphere

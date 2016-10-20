@@ -32,18 +32,15 @@ module VagrantPlugins
       end
 
       def driver
-        puts "driver requested"
         return @driver if @driver
         @driver = VagrantPlugins::VSphere::Driver.new(@machine)
       end
 
       def ssh_info
-        puts "ssh_info requested"
         driver.ssh_info
       end
 
       def state
-        puts "state requested"
         # Determine the ID of the state here.
         state_id = @driver.state
 

@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'vSphere/util/vim_helpers'
 
 describe VagrantPlugins::VSphere::Action::GetState do
   before :each do
