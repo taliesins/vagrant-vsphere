@@ -12,7 +12,6 @@ module VagrantPlugins
     	class Driver
 				attr_reader :logger
 				attr_reader :machine
-				attr_reader :current_connection
 
 				def initialize(machine)
 					@logger = Log4r::Logger.new("vagrant::provider::vsphere::driver")
@@ -22,24 +21,19 @@ module VagrantPlugins
 				def connection
 					raise "connection be called from a code block!" if !block_given?
 
-					if @current_connection
-						yield @current_connection
-					else
-						begin
-							config = @machine.provider_config
+					begin
+						config = @machine.provider_config
 
-							@current_connection = RbVmomi::VIM.connect host: config.host,
-																												 user: config.user, password: config.password,
-																												 insecure: config.insecure, proxyHost: config.proxy_host,
-																												 proxyPort: config.proxy_port
+						current_connection = RbVmomi::VIM.connect host: config.host,
+																											 user: config.user, password: config.password,
+																											 insecure: config.insecure, proxyHost: config.proxy_host,
+																											 proxyPort: config.proxy_port
 
-							yield @current_connection
-						rescue
-							raise
-						ensure
-							@current_connection.close if @current_connection
-							@current_connection = nil
-						end
+						yield current_connection
+					rescue
+						raise
+					ensure
+						current_connection.close if current_connection
 					end
 				end
 
