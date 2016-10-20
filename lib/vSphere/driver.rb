@@ -10,9 +10,6 @@ module VagrantPlugins
 			end
 
     	class Driver
-				include Util::VimHelpers
-				include Util::VmHelpers
-
 				attr_reader :logger
 				attr_reader :machine
 
