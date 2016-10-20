@@ -12,6 +12,7 @@ module VagrantPlugins
     	class Driver
 				attr_reader :logger
 				attr_reader :machine
+				attr_reader :current_connection
 
 				def initialize(machine)
 					@logger = Log4r::Logger.new("vagrant::provider::vsphere::driver")
@@ -20,19 +21,24 @@ module VagrantPlugins
 
 				def connection
 					raise "connection be called from a code block!" if !block_given?
-					begin
-						config = @machine.provider_config
 
-						conn = RbVmomi::VIM.connect host: config.host,
-																							 user: config.user, password: config.password,
-																							 insecure: config.insecure, proxyHost: config.proxy_host,
-																							 proxyPort: config.proxy_port
+					if @current_connection
+						yield @current_connection
+					else
+						begin
+							config = @machine.provider_config
 
-						yield conn
+							@current_connection = RbVmomi::VIM.connect host: config.host,
+																												 user: config.user, password: config.password,
+																												 insecure: config.insecure, proxyHost: config.proxy_host,
+																												 proxyPort: config.proxy_port
+
+							yield @current_connection
 						rescue
 							raise
 						ensure
-							conn.close if conn
+							@current_connection.close if @current_connection
+						end
 					end
 				end
 
@@ -102,17 +108,26 @@ module VagrantPlugins
 
 				def powered_on?
 					return nil if @machine.id.nil?
-					vm.runtime.powerState.eql?(VmState::POWERED_ON)
+					connection do |conn|
+						vm = get_vm_by_uuid conn, @machine
+						vm.runtime.powerState.eql?(VmState::POWERED_ON)
+					end
 				end
 
 				def powered_off?
 					return nil if @machine.id.nil?
-					vm.runtime.powerState.eql?(VmState::POWERED_OFF)
+					connection do |conn|
+						vm = get_vm_by_uuid conn, @machine
+						vm.runtime.powerState.eql?(VmState::POWERED_OFF)
+					end
 				end
 
 				def suspended?
 					return nil if @machine.id.nil?
-					vm.runtime.powerState.eql?(VmState::SUSPENDED)
+					connection do |conn|
+						vm = get_vm_by_uuid conn, @machine
+						vm.runtime.powerState.eql?(VmState::SUSPENDED)
+					end
 				end
 
 				def clone(root_path)
