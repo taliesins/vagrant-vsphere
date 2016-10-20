@@ -242,6 +242,8 @@ module VagrantPlugins
 						end
 						@logger.info("Finished destroying vm #{@machine.id}")
 					end
+
+					@machine.id = nil
 				end
 
 				def is_created
