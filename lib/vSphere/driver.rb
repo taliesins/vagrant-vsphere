@@ -115,10 +115,10 @@ module VagrantPlugins
 					vm.runtime.powerState.eql?(VmState::SUSPENDED)
 				end
 
-				def clone
+				def clone(root_path)
 					config = machine.provider_config
 					connection do |conn|
-						name = get_name @machine, config, env[:root_path]
+						name = get_name @machine, config, root_path
 						dc = get_datacenter conn, @machine
 						template = dc.find_vm config.template_name
 						fail Errors::VSphereError, :'missing_template' if template.nil?
