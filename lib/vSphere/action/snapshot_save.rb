@@ -2,7 +2,6 @@ module VagrantPlugins
   module VSphere
     module Action
       class SnapshotSave
-
         def initialize(app, _env)
           @app = app
         end

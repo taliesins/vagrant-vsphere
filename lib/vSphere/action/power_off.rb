@@ -5,9 +5,6 @@ module VagrantPlugins
   module VSphere
     module Action
       class PowerOff
-        include Util::VimHelpers
-        include Util::VmHelpers
-
         def initialize(app, _env)
           @app = app
         end

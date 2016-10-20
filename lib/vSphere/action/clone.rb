@@ -5,8 +5,6 @@ module VagrantPlugins
   module VSphere
     module Action
       class Clone
-        include Util::VimHelpers
-
         def initialize(app, _env)
           @app = app
         end

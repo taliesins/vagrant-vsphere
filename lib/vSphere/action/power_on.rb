@@ -5,7 +5,6 @@ module VagrantPlugins
   module VSphere
     module Action
       class PowerOn
-
         def initialize(app, _env)
           @app = app
         end
