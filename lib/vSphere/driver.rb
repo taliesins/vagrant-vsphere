@@ -38,6 +38,7 @@ module VagrantPlugins
 							raise
 						ensure
 							@current_connection.close if @current_connection
+							@current_connection = nil
 						end
 					end
 				end
@@ -65,13 +66,13 @@ module VagrantPlugins
 						vm = get_vm_by_uuid conn, @machine
 
 						return :not_created if vm.nil?
-					end
 
-					if powered_on?
-						:running
-					else
-						# If the VM is powered off or suspended, we consider it to be powered off. A power on command will either turn on or resume the VM
-						:poweroff
+						if powered_on?
+							:running
+						else
+							# If the VM is powered off or suspended, we consider it to be powered off. A power on command will either turn on or resume the VM
+							:poweroff
+						end
 					end
 				end
 
